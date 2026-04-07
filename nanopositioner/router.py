@@ -22,6 +22,12 @@ class MoveCommand(BaseModel):
     axis: Literal["x", "y", "z"]
     direction: Literal["positive", "negative"]
     step_mode: Literal["fine", "coarse"]
+    step_value: float | None = Field(default=None, gt=0)
+
+
+class HomeAxisCommand(BaseModel):
+    """Command to home a single axis."""
+    axis: Literal["x", "y", "z"]
 
 
 class StepConfig(BaseModel):
@@ -30,10 +36,23 @@ class StepConfig(BaseModel):
     coarse_step: float = Field(gt=0)
 
 
+class SpeedConfig(BaseModel):
+    """Jog speed configuration."""
+    speed: float = Field(gt=0)
+
+
+class MoveAbsoluteCommand(BaseModel):
+    """Manual absolute XYZ move command."""
+    x: float
+    y: float
+    z: float
+    speed: float | None = Field(default=None, gt=0)
+
+
 class ConnectRequest(BaseModel):
     """Stage connection request."""
-    port: str
-    baud_rate: int = Field(default=921600, gt=0)
+    port: str | None = None
+    baud_rate: int | None = Field(default=None, gt=0)
 
 
 @router.get("/status")
@@ -99,12 +118,25 @@ def nanopositioner_state_info() -> dict:
 @router.post("/move")
 def nanopositioner_move(cmd: MoveCommand) -> dict:
     """Move stage in specified direction."""
-    move_result = nanopositioner_device.move(cmd.axis, cmd.direction, cmd.step_mode)
+    move_result = nanopositioner_device.move(cmd.axis, cmd.direction, cmd.step_mode, cmd.step_value)
     return {
         "ok": True,
         "implemented": True,
         "message": "Stage move applied",
         "applied": move_result,
+        "position": nanopositioner_device.get_position(),
+    }
+
+
+@router.post("/home-axis")
+def nanopositioner_home_axis(cmd: HomeAxisCommand) -> dict:
+    """Home a single stage axis using OpenMicroStage axis list semantics."""
+    result = nanopositioner_device.home_axis(cmd.axis)
+    return {
+        "ok": True,
+        "implemented": True,
+        "message": f"Axis {cmd.axis.upper()} home requested",
+        "result": result,
         "position": nanopositioner_device.get_position(),
     }
 
@@ -141,5 +173,30 @@ def nanopositioner_step_config(config: StepConfig) -> dict:
         "message": "Step sizes updated",
         "fine_step": nanopositioner_device.fine_step,
         "coarse_step": nanopositioner_device.coarse_step,
+    }
+
+
+@router.post("/speed")
+def nanopositioner_set_speed(config: SpeedConfig) -> dict:
+    """Set jog speed in mm/s."""
+    nanopositioner_device.set_jog_speed(config.speed)
+    return {
+        "ok": True,
+        "implemented": True,
+        "message": "Jog speed updated",
+        "jog_speed": nanopositioner_device.jog_speed,
+    }
+
+
+@router.post("/move-absolute")
+def nanopositioner_move_absolute(cmd: MoveAbsoluteCommand) -> dict:
+    """Move to an absolute XYZ position."""
+    reply = nanopositioner_device.move_absolute(cmd.x, cmd.y, cmd.z, speed=cmd.speed)
+    return {
+        "ok": True,
+        "implemented": True,
+        "message": "Absolute move applied",
+        "reply": getattr(reply, "name", str(reply)),
+        "position": nanopositioner_device.get_position(),
     }
 

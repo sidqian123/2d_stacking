@@ -1,9 +1,14 @@
 let draggingWidget = null;
 let currDragDropZone = null;
-const WIDGET_SIZE_KEY = "dashboard_widget_sizes";
+const WIDGET_SIZE_KEY = "dashboard_widget_sizes_v2";
 const STATUS_COLLAPSE_KEY = "dashboard_status_collapsed";
 const COMMAND_LOG_LIMIT = 200;
 const commandLogEntries = [];
+let stageSpeedSetTimer = null;
+const stageStepState = {
+  mode: "fine",
+  label: "1",
+};
 
 function timestampNow() {
   const d = new Date();
@@ -287,7 +292,7 @@ function restoreWidgetSizes() {
         widget.style.gridColumn = `span ${Math.max(1, Math.round(span))}`;
       }
       if (typeof height === "number" && Number.isFinite(height)) {
-        widget.style.height = `${Math.max(250, Math.round(height))}px`;
+        widget.style.height = `${Math.max(140, Math.round(height))}px`;
       }
     });
   } catch (e) {
@@ -336,8 +341,8 @@ function initWidgetResize() {
     handle.addEventListener("pointermove", (event) => {
       if (!resizing) return;
 
-      const width = Math.max(360, startWidth + (event.clientX - startX));
-      const height = Math.max(250, startHeight + (event.clientY - startY));
+      const width = Math.max(280, startWidth + (event.clientX - startX));
+      const height = Math.max(140, startHeight + (event.clientY - startY));
 
       const styles = window.getComputedStyle(dashboard);
       const columns = styles.gridTemplateColumns.split(" ").filter(Boolean).length || 1;
@@ -472,12 +477,120 @@ async function loadStatus() {
   }
 }
 
-async function stageMove(axis, direction, stepMode) {
+async function stageMove(axis, direction, stepMode, stepValue = null) {
   await loggedFetch("/api/nanopositioner/move", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ axis, direction, step_mode: stepMode }),
-  }, `stageMove ${axis} ${direction} ${stepMode}`);
+    body: JSON.stringify({ axis, direction, step_mode: stepMode, step_value: stepValue }),
+  }, `stageMove ${axis} ${direction} ${stepMode} ${stepValue ?? ""}`.trim());
+  await loadNanopositionerStatus();
+}
+
+function updateStageStepButtons() {
+  const buttons = Array.from(document.querySelectorAll(".stage-step-btn"));
+  buttons.forEach((button) => {
+    const mode = button.getAttribute("data-step-mode");
+    const label = button.getAttribute("data-step-label");
+    const selected = mode === stageStepState.mode && label === stageStepState.label;
+    button.classList.toggle("stage-step-active", selected);
+  });
+}
+
+function stageSelectStep(mode, label) {
+  stageStepState.mode = mode === "coarse" ? "coarse" : "fine";
+  stageStepState.label = String(label || "1");
+  updateStageStepButtons();
+}
+
+function stageNudge(axis, direction) {
+  const stepValue = Number.parseFloat(stageStepState.label);
+  return stageMove(axis, direction, stageStepState.mode, Number.isFinite(stepValue) ? stepValue : null);
+}
+
+async function stageSetSpeed() {
+  const speedInput = document.getElementById("stage_speed_input");
+  const speed = Number.parseFloat(speedInput?.value || "");
+  if (!Number.isFinite(speed) || speed <= 0) {
+    appendCommandLog("ERR stageSetSpeed -> invalid speed value");
+    return;
+  }
+
+  await loggedFetch("/api/nanopositioner/speed", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ speed }),
+  }, `stageSetSpeed ${speed}`);
+  await loadNanopositionerStatus();
+}
+
+function scheduleStageSetSpeed() {
+  if (stageSpeedSetTimer !== null) {
+    clearTimeout(stageSpeedSetTimer);
+  }
+  stageSpeedSetTimer = window.setTimeout(() => {
+    stageSetSpeed();
+    stageSpeedSetTimer = null;
+  }, 220);
+}
+
+async function stageMoveAbsolute(x, y, z) {
+  await loggedFetch("/api/nanopositioner/move-absolute", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ x, y, z }),
+  }, `stageMoveAbsolute ${x} ${y} ${z}`);
+  await loadNanopositionerStatus();
+}
+
+function readNumericInput(id) {
+  const el = document.getElementById(id);
+  const value = Number.parseFloat(el?.value || "");
+  return Number.isFinite(value) ? value : null;
+}
+
+async function stageMoveAbsoluteFromInputs() {
+  const x = readNumericInput("stage_x_input");
+  const y = readNumericInput("stage_y_input");
+  const z = readNumericInput("stage_z_input");
+  if (x === null || y === null || z === null) {
+    appendCommandLog("ERR stageMoveAbsolute -> invalid XYZ input");
+    return;
+  }
+  await stageMoveAbsolute(x, y, z);
+}
+
+function syncInputValue(id, value, decimals = 1) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (document.activeElement === el) return;
+  if (typeof value !== "number" || !Number.isFinite(value)) return;
+  el.value = value.toFixed(decimals);
+}
+
+function updateStagePositionHints(position) {
+  if (!position || typeof position !== "object") return;
+  const x = Number.isFinite(position.x) ? position.x : 0;
+  const y = Number.isFinite(position.y) ? position.y : 0;
+  const z = Number.isFinite(position.z) ? position.z : 0;
+  const text = `Current position: X ${x.toFixed(3)}, Y ${y.toFixed(3)}, Z ${z.toFixed(3)}`;
+
+  const speedHint = document.getElementById("stage_position_hint_speed");
+  if (speedHint) {
+    speedHint.textContent = text;
+  }
+
+  const xyzHint = document.getElementById("stage_position_hint_xyz");
+  if (xyzHint) {
+    xyzHint.textContent = text;
+  }
+}
+
+async function stageHomeAxis(axis) {
+  await loggedFetch("/api/nanopositioner/home-axis", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ axis }),
+  }, `stageHomeAxis ${axis}`);
   await loadNanopositionerStatus();
 }
 
@@ -497,6 +610,18 @@ async function loadNanopositionerStatus() {
   const target = document.getElementById("stage_status");
   if (target) {
     target.textContent = JSON.stringify(data, null, 2);
+  }
+
+  const position = data?.position;
+  if (position && typeof position === "object") {
+    syncInputValue("stage_x_input", position.x, 3);
+    syncInputValue("stage_y_input", position.y, 3);
+    syncInputValue("stage_z_input", position.z, 3);
+    updateStagePositionHints(position);
+  }
+
+  if (typeof data?.jog_speed === "number") {
+    syncInputValue("stage_speed_input", data.jog_speed, 2);
   }
 }
 
@@ -770,6 +895,7 @@ initWidgetResize();
 restoreWidgetSizes();
 initStatusToggles();
 initThermalGraph();
+updateStageStepButtons();
 loadStatus();
 loadNanopositionerStatus();
 loadThermalStatus();

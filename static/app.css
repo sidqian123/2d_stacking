@@ -50,23 +50,37 @@ body {
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  grid-template-columns: repeat(12, minmax(0, 1fr));
   grid-auto-rows: auto;
   gap: 14px;
   grid-auto-flow: dense;
 }
 
 .widget {
+  grid-column: span 4;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: 0 10px 30px rgba(27, 37, 51, 0.08);
   overflow: auto;
   transition: box-shadow 140ms ease, transform 140ms ease, cursor 140ms ease, opacity 140ms ease, background-color 140ms ease;
-  min-width: 360px;
-  min-height: 250px;
+  min-width: 0;
+  min-height: 0;
+  height: fit-content;
   cursor: grab;
   position: relative;
+}
+
+.widget[data-widget="camera-feed"],
+.widget[data-widget="camera-controls"],
+.widget[data-widget="stage-controls"],
+.widget[data-widget="command-logs"] {
+  grid-column: span 6;
+}
+
+.widget[data-widget="thermal-controls"],
+.widget[data-widget="vacuum-controls"] {
+  grid-column: span 3;
 }
 
 .widget.resizing {
@@ -222,7 +236,7 @@ button {
   transition: transform 120ms ease;
 }
 
-button:hover {
+button:hover:not(.stage-home-btn):not(.stage-dir-btn):not(.stage-step-btn):not(.stage-z-btn) {
   transform: translateY(-1px);
 }
 
@@ -302,27 +316,208 @@ pre {
   font-size: 11px;
 }
 
-.axis-grid {
+.stage-console {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 4px;
+}
+
+.stage-xy {
+  flex: 1;
+  min-width: 280px;
+}
+
+.stage-pad {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  width: min(100%, 420px);
+  margin: 0 auto;
+  border-radius: 999px;
+  background: radial-gradient(circle at center, #f8f8f9 0%, #ececef 55%, #dedfe2 100%);
+  border: 1px solid #cdd0d7;
+  box-shadow: inset 0 1px 4px rgba(18, 24, 35, 0.08), 0 8px 16px rgba(18, 24, 35, 0.1);
+}
+
+.stage-rings {
+  position: absolute;
+  inset: 10%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, transparent 17%, rgba(120, 126, 136, 0.2) 17%, rgba(120, 126, 136, 0.2) 20%, transparent 20%),
+    radial-gradient(circle, transparent 34%, rgba(120, 126, 136, 0.2) 34%, rgba(120, 126, 136, 0.2) 37%, transparent 37%),
+    radial-gradient(circle, transparent 52%, rgba(120, 126, 136, 0.2) 52%, rgba(120, 126, 136, 0.2) 55%, transparent 55%),
+    radial-gradient(circle, transparent 70%, rgba(120, 126, 136, 0.2) 70%, rgba(120, 126, 136, 0.2) 73%, transparent 73%);
+}
+
+.stage-cross {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 80%;
+  height: 14px;
+  margin: -7px 0 0 -40%;
+  border-radius: 999px;
+  background: #f6f7f8;
+  border: 1px solid #c9cdd6;
+  box-shadow: inset 0 1px 3px rgba(17, 24, 39, 0.1);
+}
+
+.stage-cross-b {
+  transform: rotate(45deg);
+}
+
+.stage-cross-a {
+  transform: rotate(-45deg);
+}
+
+.stage-home-btn,
+.stage-dir-btn,
+.stage-step-btn,
+.stage-z-btn {
+  position: absolute;
+  border-radius: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #f8fafc;
+  border: 1px solid #cfd4de;
+  background: linear-gradient(180deg, #4a5b76, #34445c);
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.12);
+  padding: 6px 10px;
+  min-width: 64px;
+}
+
+.stage-home-btn {
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.stage-home-tl { top: -2%; left: -2%; }
+.stage-home-tr { top: -2%; right: -2%; }
+.stage-home-bl { bottom: -2%; left: -2%; }
+.stage-home-br { bottom: -2%; right: -2%; }
+
+.stage-dir-btn {
+  min-width: 58px;
+  text-transform: uppercase;
+  font-size: 17px;
+  background: linear-gradient(180deg, #f6f1cb, #e6dfa8);
+  color: #334155;
+}
+
+.stage-y-plus { top: 14%; left: 50%; transform: translateX(-50%); background: linear-gradient(180deg, #e4e6fb, #ccd0f3); }
+.stage-y-minus { bottom: 14%; left: 50%; transform: translateX(-50%); background: linear-gradient(180deg, #e8e6fa, #d7d2f2); }
+.stage-x-minus { top: 50%; left: 7%; transform: translateY(-50%); }
+.stage-x-plus { top: 50%; right: 7%; transform: translateY(-50%); }
+
+.stage-step-rail {
+  position: absolute;
+  top: 17%;
+  right: 12%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transform: rotate(34deg);
+  transform-origin: top right;
+}
+
+.stage-step-btn {
+  position: relative;
+  border-radius: 999px;
+  min-width: 42px;
+  padding: 4px 8px;
+  font-size: 12px;
+  background: linear-gradient(180deg, #51565f, #2f333a);
+  color: #f8fafc;
+  border: 2px solid #f4b4bc;
+}
+
+.stage-step-btn.stage-step-active {
+  border-color: #f97316;
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
+}
+
+.stage-z-strip {
+  width: 82px;
+  border-radius: 12px;
+  border: 1px solid #cfd4de;
+  background: linear-gradient(180deg, #f3f4f6, #e7e9ee);
+  padding: 8px 8px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  box-shadow: inset 0 1px 2px rgba(17, 24, 39, 0.08);
+}
+
+.stage-z-btn {
+  position: relative;
+  width: 100%;
+  text-transform: uppercase;
+  font-size: 24px;
+  padding: 5px 0;
+  background: linear-gradient(180deg, #def8df, #c4ebc8);
+  color: #334155;
+}
+
+.stage-z-minus {
+  background: linear-gradient(180deg, #d9f2d6, #b7ddb5);
+}
+
+.stage-z-strip .stage-step-btn {
+  width: 52px;
+}
+
+.stage-home-btn:hover,
+.stage-dir-btn:hover,
+.stage-step-btn:hover,
+.stage-z-btn:hover {
+  filter: brightness(1.05);
+}
+
+.stage-manual {
+  margin-top: 14px;
   display: grid;
   gap: 10px;
 }
 
-.axis-row {
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px;
-  background: #f9fbfd;
-}
-
-.axis-row h3 {
-  margin: 0 0 8px;
-  font-size: 14px;
-}
-
-.axis-buttons {
+.stage-manual-row {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: auto 140px;
+  align-items: center;
   gap: 8px;
+}
+
+.stage-manual-row label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  justify-content: flex-start;
+}
+
+.stage-manual-row input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #cfd4de;
+  background: #f8fafc;
+  color: #1f2937;
+}
+
+.stage-manual-xyz {
+  grid-template-columns: auto minmax(80px, 1fr) auto minmax(80px, 1fr) auto minmax(80px, 1fr) auto;
+}
+
+.stage-manual-xyz button {
+  white-space: nowrap;
+}
+
+.stage-position-hint {
+  margin: -2px 0 0;
+  font-size: 11px;
+  color: #64748b;
+  font-family: "IBM Plex Mono", monospace;
 }
 
 @media (max-width: 1200px) {
@@ -332,8 +527,35 @@ pre {
     grid-column: span 12;
   }
 
-  .axis-buttons {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .widget[data-widget="command-logs"],
+  .widget[data-widget="thermal-controls"],
+  .widget[data-widget="vacuum-controls"] {
+    grid-column: span 6;
+  }
+}
+
+@media (max-width: 900px) {
+  .widget {
+    grid-column: span 12 !important;
+  }
+}
+
+@media (max-width: 780px) {
+  .stage-console {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .stage-z-strip {
+    width: min(100%, 280px);
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .stage-manual-row,
+  .stage-manual-xyz {
+    grid-template-columns: 1fr;
   }
 }
 

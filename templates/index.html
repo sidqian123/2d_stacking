@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/app.css">
+  <link rel="stylesheet" href="/static/app.css?v=20260407-7">
 </head>
 <body>
   <div class="bg-grid" aria-hidden="true"></div>
@@ -83,41 +83,57 @@
           <span class="grab">Drag</span>
         </header>
         <div class="widget-body">
-          <div class="stage-toolbar">
-            <button class="secondary" onclick="stageHome()">Home</button>
-            <button class="danger" onclick="stageStop()">Stop</button>
+          <div class="stage-console" aria-label="Nanopositioner direction pad">
+            <div class="stage-xy">
+              <div class="stage-pad">
+                <div class="stage-rings" aria-hidden="true"></div>
+                <div class="stage-cross stage-cross-a" aria-hidden="true"></div>
+                <div class="stage-cross stage-cross-b" aria-hidden="true"></div>
+
+                <button class="stage-home-btn stage-home-tl" type="button" onclick="stageHome()">ALL HOME</button>
+                <button class="stage-home-btn stage-home-tr" type="button" onclick="stageHomeAxis('y')">Y HOME</button>
+                <button class="stage-home-btn stage-home-bl" type="button" onclick="stageHomeAxis('x')">X HOME</button>
+                <button class="stage-home-btn stage-home-br" type="button" onclick="stageHomeAxis('z')">Z HOME</button>
+
+                <button class="stage-dir-btn stage-y-plus" type="button" onclick="stageNudge('y', 'positive')">+Y</button>
+                <button class="stage-dir-btn stage-y-minus" type="button" onclick="stageNudge('y', 'negative')">-Y</button>
+                <button class="stage-dir-btn stage-x-minus" type="button" onclick="stageNudge('x', 'negative')">-X</button>
+                <button class="stage-dir-btn stage-x-plus" type="button" onclick="stageNudge('x', 'positive')">+X</button>
+
+                <div class="stage-step-rail" role="group" aria-label="XY move scale">
+                  <button class="stage-step-btn" type="button" data-step-mode="coarse" data-step-label="100" onclick="stageSelectStep('coarse', '100')">100</button>
+                  <button class="stage-step-btn" type="button" data-step-mode="coarse" data-step-label="10" onclick="stageSelectStep('coarse', '10')">10</button>
+                  <button class="stage-step-btn" type="button" data-step-mode="fine" data-step-label="1" onclick="stageSelectStep('fine', '1')">1</button>
+                  <button class="stage-step-btn" type="button" data-step-mode="fine" data-step-label="0.1" onclick="stageSelectStep('fine', '0.1')">0.1</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="stage-z-strip" aria-label="Z axis controls">
+              <button class="stage-z-btn" type="button" onclick="stageNudge('z', 'positive')">+Z</button>
+              <button class="stage-step-btn" type="button" data-step-mode="coarse" data-step-label="10" onclick="stageSelectStep('coarse', '10')">10</button>
+              <button class="stage-step-btn" type="button" data-step-mode="fine" data-step-label="1" onclick="stageSelectStep('fine', '1')">1</button>
+              <button class="stage-step-btn" type="button" data-step-mode="fine" data-step-label="0.1" onclick="stageSelectStep('fine', '0.1')">0.1</button>
+              <button class="stage-z-btn stage-z-minus" type="button" onclick="stageNudge('z', 'negative')">-Z</button>
+            </div>
           </div>
 
-          <div class="axis-grid">
-            <div class="axis-row">
-              <h3>X Axis</h3>
-              <div class="axis-buttons">
-                <button class="secondary" onclick="stageMove('x', 'negative', 'coarse')">- Coarse</button>
-                <button class="secondary" onclick="stageMove('x', 'negative', 'fine')">- Fine</button>
-                <button onclick="stageMove('x', 'positive', 'fine')">+ Fine</button>
-                <button onclick="stageMove('x', 'positive', 'coarse')">+ Coarse</button>
-              </div>
+          <div class="stage-manual" aria-label="Manual stage controls">
+            <div class="stage-manual-row">
+              <label for="stage_speed_input">Speed (mm/s)</label>
+              <input id="stage_speed_input" type="number" min="0.1" step="0.1" value="3.0" oninput="scheduleStageSetSpeed()">
             </div>
 
-            <div class="axis-row">
-              <h3>Y Axis</h3>
-              <div class="axis-buttons">
-                <button class="secondary" onclick="stageMove('y', 'negative', 'coarse')">- Coarse</button>
-                <button class="secondary" onclick="stageMove('y', 'negative', 'fine')">- Fine</button>
-                <button onclick="stageMove('y', 'positive', 'fine')">+ Fine</button>
-                <button onclick="stageMove('y', 'positive', 'coarse')">+ Coarse</button>
-              </div>
+            <div class="stage-manual-row stage-manual-xyz">
+              <label for="stage_x_input">X</label>
+              <input id="stage_x_input" type="number" step="0.1" value="0.0">
+              <label for="stage_y_input">Y</label>
+              <input id="stage_y_input" type="number" step="0.1" value="0.0">
+              <label for="stage_z_input">Z</label>
+              <input id="stage_z_input" type="number" step="0.1" value="0.0">
+              <button type="button" onclick="stageMoveAbsoluteFromInputs()">Move To XYZ</button>
             </div>
-
-            <div class="axis-row">
-              <h3>Z Axis</h3>
-              <div class="axis-buttons">
-                <button class="secondary" onclick="stageMove('z', 'negative', 'coarse')">- Coarse</button>
-                <button class="secondary" onclick="stageMove('z', 'negative', 'fine')">- Fine</button>
-                <button onclick="stageMove('z', 'positive', 'fine')">+ Fine</button>
-                <button onclick="stageMove('z', 'positive', 'coarse')">+ Coarse</button>
-              </div>
-            </div>
+            <p class="stage-position-hint" id="stage_position_hint_xyz">Current position: X 0.000, Y 0.000, Z 0.000</p>
           </div>
 
         </div>
@@ -281,6 +297,6 @@
     </section>
   </main>
 
-  <script src="/static/app.js"></script>
+  <script src="/static/app.js?v=20260407-7"></script>
 </body>
 </html>
