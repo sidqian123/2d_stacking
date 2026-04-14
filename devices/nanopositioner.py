@@ -274,7 +274,6 @@ class NanopositionerDevice(BaseDevice):
                 "step_um": step_um,
                 "step_value": resolved_step,
                 "delta": delta,
-                "target": target,
                 "measured_position": measured_pos,
                 "clamped": clamped,
                 "travel_range_mm": [self.MIN_TRAVEL_MM, self.MAX_TRAVEL_MM],
@@ -293,7 +292,7 @@ class NanopositionerDevice(BaseDevice):
             "step_um": step_um,
             "step_value": resolved_step,
             "delta": delta,
-            "target": target,
+            "measured_position": dict(self.position),
             "clamped": clamped,
             "travel_range_mm": [self.MIN_TRAVEL_MM, self.MAX_TRAVEL_MM],
             "reply": "SIMULATED",
@@ -308,6 +307,14 @@ class NanopositionerDevice(BaseDevice):
     
     def get_position(self) -> Dict[str, float]:
         """Get current position."""
+        with self.lock:
+            return dict(self.position)
+
+    def get_measured_position(self) -> Dict[str, float]:
+        """Get measured XYZ from hardware when available; otherwise return cache."""
+        measured = self._refresh_position_from_hardware()
+        if measured is not None:
+            return {"x": float(measured[0]), "y": float(measured[1]), "z": float(measured[2])}
         with self.lock:
             return dict(self.position)
     

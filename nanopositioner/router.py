@@ -124,7 +124,7 @@ def nanopositioner_move(cmd: MoveCommand) -> dict:
         "implemented": True,
         "message": "Stage move applied",
         "applied": move_result,
-        "position": nanopositioner_device.get_position(),
+        "position": nanopositioner_device.get_measured_position(),
     }
 
 
@@ -137,7 +137,7 @@ def nanopositioner_home_axis(cmd: HomeAxisCommand) -> dict:
         "implemented": True,
         "message": f"Axis {cmd.axis.upper()} home requested",
         "result": result,
-        "position": nanopositioner_device.get_position(),
+        "position": nanopositioner_device.get_measured_position(),
     }
 
 
@@ -149,7 +149,7 @@ def nanopositioner_home() -> dict:
         "ok": True,
         "implemented": True,
         "message": "Stage homed",
-        "position": nanopositioner_device.get_position(),
+        "position": nanopositioner_device.get_measured_position(),
     }
 
 
@@ -192,7 +192,7 @@ def nanopositioner_set_speed(config: SpeedConfig) -> dict:
 def nanopositioner_move_absolute(cmd: MoveAbsoluteCommand) -> dict:
     """Move to an absolute XYZ position."""
     reply = nanopositioner_device.move_absolute(cmd.x, cmd.y, cmd.z, speed=cmd.speed)
-    position = nanopositioner_device.get_position()
+    position = nanopositioner_device.get_measured_position()
     return {
         "ok": True,
         "implemented": True,
