@@ -302,6 +302,12 @@ This project supports `.env` files via `python-dotenv`.
 - `CAMERA_SENSOR_MODEL` (optional, Picamera2 backend)
 - `CAMERA_TUNING_FILE` (optional, Picamera2 backend)
 
+## Nanopositioner Hardware Support
+
+Nanopositioner hardware support uses the Python API from:
+
+https://github.com/hacker-fab/MicroManipulatorStepper/#subdirectory=software
+
 **Example `.env`:**
 ```env
 HOST=0.0.0.0
