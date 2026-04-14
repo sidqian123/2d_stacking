@@ -172,7 +172,16 @@ function initDashboardDrag() {
   const widgets = Array.from(dashboard.querySelectorAll(".widget"));
 
   widgets.forEach((widget) => {
+    // Prevent browser-native drag interactions from controls/media inside widgets.
+    Array.from(widget.querySelectorAll("button, input, select, textarea, label, canvas, img")).forEach((el) => {
+      el.setAttribute("draggable", "false");
+    });
+
     widget.addEventListener("dragstart", (e) => {
+      if (!e.target || !e.target.closest(".widget-handle")) {
+        e.preventDefault();
+        return;
+      }
       draggingWidget = widget;
       widget.classList.add("dragging");
       e.dataTransfer.effectAllowed = "move";
