@@ -13,7 +13,7 @@ class ThermalPlateDevice(BaseDevice):
         """Initialize thermal plate device."""
         super().__init__("Thermal Plate")
         self.current_temp = 25.0  # Current temperature in Celsius
-        self.target_temp = 25.0   # Target temperature in Celsius
+        self.target_temp = 0.0    # Target temperature in Celsius; defaults to 0 while OFF
         self.temperature_history: List[float] = [25.0]  # History for graphing (last 60 readings)
     
     def set_target_temp(self, target: float) -> None:

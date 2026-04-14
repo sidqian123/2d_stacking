@@ -101,6 +101,7 @@
                 <button class="stage-dir-btn stage-x-plus" type="button" onclick="stageNudge('x', 'positive')">+X</button>
 
                 <div class="stage-step-rail" role="group" aria-label="XY move step in microns">
+                  <button class="stage-step-btn" type="button" data-step-mode="coarse" data-step-label="1000" onclick="stageSelectStep('coarse', '1000')">1000 um</button>
                   <button class="stage-step-btn" type="button" data-step-mode="coarse" data-step-label="100" onclick="stageSelectStep('coarse', '100')">100 um</button>
                   <button class="stage-step-btn" type="button" data-step-mode="coarse" data-step-label="10" onclick="stageSelectStep('coarse', '10')">10 um</button>
                   <button class="stage-step-btn" type="button" data-step-mode="fine" data-step-label="1" onclick="stageSelectStep('fine', '1')">1 um</button>
@@ -111,6 +112,8 @@
 
             <div class="stage-z-strip" aria-label="Z axis controls">
               <button class="stage-z-btn" type="button" onclick="stageNudge('z', 'positive')">+Z</button>
+              <button class="stage-step-btn" type="button" data-step-mode="coarse" data-step-label="1000" onclick="stageSelectStep('coarse', '1000')">1000 um</button>
+              <button class="stage-step-btn" type="button" data-step-mode="coarse" data-step-label="100" onclick="stageSelectStep('coarse', '100')">100 um</button>
               <button class="stage-step-btn" type="button" data-step-mode="coarse" data-step-label="10" onclick="stageSelectStep('coarse', '10')">10 um</button>
               <button class="stage-step-btn" type="button" data-step-mode="fine" data-step-label="1" onclick="stageSelectStep('fine', '1')">1 um</button>
               <button class="stage-step-btn" type="button" data-step-mode="fine" data-step-label="0.1" onclick="stageSelectStep('fine', '0.1')">0.1 um</button>
@@ -153,7 +156,7 @@
               </div>
               <div class="temp-target">
                 <div class="temp-label">Target</div>
-                <div class="temp-value"><span id="thermal_target">25</span>°C</div>
+                <div class="temp-value"><span id="thermal_target">0</span>°C</div>
               </div>
             </div>
 
