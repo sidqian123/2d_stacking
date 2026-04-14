@@ -244,10 +244,26 @@ class NanopositionerDevice(BaseDevice):
 
         delta = resolved_step if direction == "positive" else -resolved_step
 
-        current_x, current_y, current_z = self.read_current_position()
-        if current_x is None or current_y is None or current_z is None:
-            with self.lock:
-                current_x, current_y, current_z = self.position["x"], self.position["y"], self.position["z"]
+        interface = self._connected_interface()
+        if interface is not None:
+            measured_current = self._refresh_position_from_hardware()
+            if measured_current is None:
+                return {
+                    "status": "ERROR",
+                    "message": "Unable to read measured stage position before jog move",
+                    "axis": axis,
+                    "direction": direction,
+                    "step_mode": step_mode,
+                    "step_um": step_um,
+                    "step_value": resolved_step,
+                    "travel_range_mm": [self.MIN_TRAVEL_MM, self.MAX_TRAVEL_MM],
+                }
+            current_x, current_y, current_z = measured_current
+        else:
+            current_x, current_y, current_z = self.read_current_position()
+            if current_x is None or current_y is None or current_z is None:
+                with self.lock:
+                    current_x, current_y, current_z = self.position["x"], self.position["y"], self.position["z"]
 
         target = {
             "x": float(current_x),
@@ -263,7 +279,6 @@ class NanopositionerDevice(BaseDevice):
         }
         clamped = target != unclamped_target
 
-        interface = self._connected_interface()
         if interface is not None:
             feed_rate = self._feed_rate_for_step(abs(resolved_step))
             reply = self.move_to(target["x"], target["y"], target["z"], feed_rate, move_immediately=False, blocking=True, timeout=2)

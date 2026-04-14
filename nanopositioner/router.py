@@ -119,10 +119,11 @@ def nanopositioner_state_info() -> dict:
 def nanopositioner_move(cmd: MoveCommand) -> dict:
     """Move stage in specified direction."""
     move_result = nanopositioner_device.move(cmd.axis, cmd.direction, cmd.step_mode, cmd.step_value)
+    move_ok = move_result.get("status") != "ERROR"
     return {
-        "ok": True,
+        "ok": move_ok,
         "implemented": True,
-        "message": "Stage move applied",
+        "message": "Stage move applied" if move_ok else move_result.get("message", "Stage move failed"),
         "applied": move_result,
         "position": nanopositioner_device.get_measured_position(),
     }
