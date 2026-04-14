@@ -267,25 +267,22 @@ class NanopositionerDevice(BaseDevice):
         delta = resolved_step if direction == "positive" else -resolved_step
 
         interface = self._connected_interface()
+        position_source = "measured"
         if interface is not None:
             measured_current = self._refresh_position_from_hardware()
             if measured_current is None:
-                return {
-                    "status": "ERROR",
-                    "message": "Unable to read measured stage position before jog move",
-                    "axis": axis,
-                    "direction": direction,
-                    "step_mode": step_mode,
-                    "step_um": step_um,
-                    "step_value": resolved_step,
-                    "travel_range_mm": [self.MIN_TRAVEL_MM, self.MAX_TRAVEL_MM],
-                }
-            current_x, current_y, current_z = measured_current
+                # Fall back to last cached measured position so bounds are still enforced.
+                with self.lock:
+                    current_x, current_y, current_z = self.position["x"], self.position["y"], self.position["z"]
+                position_source = "cached"
+            else:
+                current_x, current_y, current_z = measured_current
         else:
             current_x, current_y, current_z = self.read_current_position()
             if current_x is None or current_y is None or current_z is None:
                 with self.lock:
                     current_x, current_y, current_z = self.position["x"], self.position["y"], self.position["z"]
+            position_source = "simulated"
 
         target = {
             "x": float(current_x),
@@ -317,6 +314,7 @@ class NanopositionerDevice(BaseDevice):
                 "step_value": resolved_step,
                 "delta": delta,
                 "measured_position": measured_pos,
+                "position_source": position_source,
                 "clamped": clamped,
                 "travel_range_mm": [self.MIN_TRAVEL_MM, self.MAX_TRAVEL_MM],
                 "feed_rate": feed_rate,
@@ -335,6 +333,7 @@ class NanopositionerDevice(BaseDevice):
             "step_value": resolved_step,
             "delta": delta,
             "measured_position": dict(self.position),
+            "position_source": position_source,
             "clamped": clamped,
             "travel_range_mm": [self.MIN_TRAVEL_MM, self.MAX_TRAVEL_MM],
             "reply": "SIMULATED",
