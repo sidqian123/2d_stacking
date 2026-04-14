@@ -54,11 +54,11 @@ class NanopositionerDevice(BaseDevice):
 
     def _refresh_position_from_hardware(self) -> tuple[float, float, float] | None:
         """Update cached XYZ position from hardware if available."""
-        interface = self._connected_interface()
-        if interface is None:
-            return None
         try:
-            x, y, z = interface.read_current_position()
+            reading = oms_channel.call_interface("read_current_position", require_connected=True)
+            if reading is None:
+                return None
+            x, y, z = reading
         except Exception:
             return None
         if x is None or y is None or z is None:
@@ -91,16 +91,15 @@ class NanopositionerDevice(BaseDevice):
 
     def read_firmware_version(self) -> tuple[int, int, int]:
         """Read the stage firmware version."""
-        interface = self._connected_interface()
-        if interface is None:
+        reply = oms_channel.call_interface("read_firmware_version", require_connected=True)
+        if reply is None:
             return 0, 0, 0
-        return interface.read_firmware_version()
+        return reply
 
     def home(self, axis_list: list[int] = None):
         """Home the stage and update the local position cache."""
-        interface = self._connected_interface()
-        if interface is not None:
-            reply = interface.home(axis_list)
+        if self._connected_interface() is not None:
+            reply = oms_channel.call_interface("home", axis_list, require_connected=True)
             if self._reply_ok(reply):
                 refreshed = self._refresh_position_from_hardware()
                 if refreshed is not None:
@@ -120,9 +119,8 @@ class NanopositionerDevice(BaseDevice):
         if axis_index is None:
             return {"status": "ERROR", "message": f"Invalid axis: {axis}"}
 
-        interface = self._connected_interface()
-        if interface is not None:
-            reply = interface.home([axis_index])
+        if self._connected_interface() is not None:
+            reply = oms_channel.call_interface("home", [axis_index], require_connected=True)
             if self._reply_ok(reply):
                 refreshed = self._refresh_position_from_hardware()
                 if refreshed is not None:
@@ -148,9 +146,18 @@ class NanopositionerDevice(BaseDevice):
         timeout: float = 1,
     ):
         """Move the stage using the OpenMicroStage interface when connected."""
-        interface = self._connected_interface()
-        if interface is not None:
-            reply = interface.move_to(x, y, z, f, move_immediately=move_immediately, blocking=blocking, timeout=timeout)
+        if self._connected_interface() is not None:
+            reply = oms_channel.call_interface(
+                "move_to",
+                x,
+                y,
+                z,
+                f,
+                move_immediately=move_immediately,
+                blocking=blocking,
+                timeout=timeout,
+                require_connected=True,
+            )
             if self._reply_ok(reply):
                 refreshed = self._refresh_position_from_hardware()
                 if refreshed is not None:
@@ -175,10 +182,10 @@ class NanopositionerDevice(BaseDevice):
 
     def wait_for_stop(self, disable_callbacks: bool = True):
         """Wait for the stage to stop moving."""
-        interface = self._connected_interface()
-        if interface is None:
+        if self._connected_interface() is None:
             return {"status": "OK"}
-        return interface.wait_for_stop(disable_callbacks=disable_callbacks)
+        reply = oms_channel.call_interface("wait_for_stop", disable_callbacks=disable_callbacks, require_connected=True)
+        return {"status": "OK"} if reply is None else reply
 
     def read_current_position(self) -> tuple[float, float, float] | tuple[None, None, None]:
         """Get the current position from hardware or the local cache."""
@@ -191,9 +198,8 @@ class NanopositionerDevice(BaseDevice):
 
     def set_pose(self, x: float, y: float, z: float):
         """Set the stage pose as fast as possible."""
-        interface = self._connected_interface()
-        if interface is not None:
-            reply = interface.set_pose(x, y, z)
+        if self._connected_interface() is not None:
+            reply = oms_channel.call_interface("set_pose", x, y, z, require_connected=True)
             if self._reply_ok(reply):
                 refreshed = self._refresh_position_from_hardware()
                 if refreshed is not None:
@@ -210,10 +216,9 @@ class NanopositionerDevice(BaseDevice):
 
     def read_device_state_info(self):
         """Read the controller state information if hardware is connected."""
-        interface = self._connected_interface()
-        if interface is None:
+        if self._connected_interface() is None:
             return None
-        return interface.read_device_state_info()
+        return oms_channel.call_interface("read_device_state_info", require_connected=True)
     
     def set_position(self, axis: str, value: float) -> None:
         """Set position for a single axis."""

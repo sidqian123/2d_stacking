@@ -177,5 +177,19 @@ class OpenMicroStageChannel:
                 },
             }
 
+    def call_interface(self, method_name: str, *args, require_connected: bool = True, **kwargs):
+        """Call an OpenMicroStageInterface method under a shared channel lock."""
+        with self._lock:
+            interface = self._ensure_interface()
+            if interface is None:
+                return None
+            if require_connected and getattr(interface, "serial", None) is None:
+                return None
+
+            method = getattr(interface, method_name, None)
+            if method is None:
+                raise AttributeError(f"Interface has no method '{method_name}'")
+            return method(*args, **kwargs)
+
 
 oms_channel = OpenMicroStageChannel()

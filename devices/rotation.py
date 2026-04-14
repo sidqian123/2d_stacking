@@ -24,15 +24,15 @@ class RotationPlateDevice(BaseDevice):
 
     def get_rotation(self) -> float:
         """Read current rotation from hardware API or fallback to cached value."""
-        interface = oms_channel.get_interface()
-        if interface is not None and getattr(interface, "serial", None) is not None:
-            try:
-                value = self._normalize_angle(float(interface.get_rotation()))
+        try:
+            value = oms_channel.call_interface("get_rotation", require_connected=True)
+            if value is not None:
+                normalized = self._normalize_angle(float(value))
                 with self.lock:
-                    self.current_angle = value
-                return value
-            except Exception:
-                pass
+                    self.current_angle = normalized
+                return normalized
+        except Exception:
+            pass
 
         with self.lock:
             return self.current_angle
@@ -41,13 +41,12 @@ class RotationPlateDevice(BaseDevice):
         """Set desired rotation angle in degrees."""
         normalized = self._normalize_angle(angle)
 
-        interface = oms_channel.get_interface()
-        if interface is not None and getattr(interface, "serial", None) is not None:
-            try:
-                interface.set_rotation(float(normalized))
+        try:
+            reply = oms_channel.call_interface("set_rotation", float(normalized), require_connected=True)
+            if reply is not None:
                 self.status_message = f"Rotation set via shared channel: {normalized:.2f} deg"
-            except Exception as exc:
-                self.status_message = f"Rotation command failed: {exc}"
+        except Exception as exc:
+            self.status_message = f"Rotation command failed: {exc}"
 
         with self.lock:
             self.target_angle = normalized

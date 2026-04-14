@@ -20,21 +20,20 @@ class VacuumDevice(BaseDevice):
     def set_vacuum(self, vacuum_on: bool) -> None:
         """Compatibility wrapper for OpenMicroStageInterface-style vacuum control."""
         self.set_power(vacuum_on)
-        interface = oms_channel.get_interface()
-        if interface is not None and getattr(interface, "serial", None) is not None:
-            interface.set_vacuum(bool(vacuum_on))
+        reply = oms_channel.call_interface("set_vacuum", bool(vacuum_on), require_connected=True)
+        if reply is not None:
             self.status_message = f"Vacuum set via shared channel: {'ON' if vacuum_on else 'OFF'}"
 
     def get_vacuum(self) -> bool:
         """Read vacuum state from hardware API or fallback to cached value."""
-        interface = oms_channel.get_interface()
-        if interface is not None and getattr(interface, "serial", None) is not None:
-            try:
-                value = bool(interface.get_vacuum())
-                self.is_on = value
-                return value
-            except Exception:
-                return self.is_on
+        try:
+            value = oms_channel.call_interface("get_vacuum", require_connected=True)
+            if value is not None:
+                parsed = bool(value)
+                self.is_on = parsed
+                return parsed
+        except Exception:
+            return self.is_on
         return self.is_on
     
     def get_device_status(self) -> Dict[str, Any]:

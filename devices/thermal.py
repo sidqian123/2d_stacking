@@ -29,21 +29,20 @@ class ThermalPlateDevice(BaseDevice):
     def set_temperature(self, temperature: float) -> None:
         """Compatibility wrapper for OpenMicroStageInterface-style temperature control."""
         self.set_target_temp(temperature)
-        interface = oms_channel.get_interface()
-        if interface is not None and getattr(interface, "serial", None) is not None:
-            interface.set_temperature(float(self.target_temp))
+        reply = oms_channel.call_interface("set_temperature", float(self.target_temp), require_connected=True)
+        if reply is not None:
             self.status_message = f"Temperature set via shared channel to {self.target_temp}°C"
 
     def get_temperature(self) -> float:
         """Read current temperature from hardware API or fallback to cached value."""
-        interface = oms_channel.get_interface()
-        if interface is not None and getattr(interface, "serial", None) is not None:
-            try:
-                value = float(interface.get_temperature())
-                self.current_temp = value
-                return value
-            except Exception:
-                return self.current_temp
+        try:
+            value = oms_channel.call_interface("get_temperature", require_connected=True)
+            if value is not None:
+                parsed = float(value)
+                self.current_temp = parsed
+                return parsed
+        except Exception:
+            return self.current_temp
         return self.current_temp
     
     def get_target_temp(self) -> float:
