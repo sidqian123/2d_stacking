@@ -80,7 +80,8 @@ body {
 
 .widget[data-widget="thermal-controls"],
 .widget[data-widget="vacuum-controls"],
-.widget[data-widget="rotation-controls"] {
+.widget[data-widget="rotation-controls"],
+.widget[data-widget="carousel-controls"] {
   grid-column: span 3;
 }
 
@@ -536,7 +537,8 @@ pre {
   .widget[data-widget="command-logs"],
   .widget[data-widget="thermal-controls"],
   .widget[data-widget="vacuum-controls"],
-  .widget[data-widget="rotation-controls"] {
+  .widget[data-widget="rotation-controls"],
+  .widget[data-widget="carousel-controls"] {
     grid-column: span 6;
   }
 }
@@ -826,6 +828,143 @@ pre {
 }
 
 #rotation_status {
+  font-size: 12px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+/* Carousel Styles */
+.carousel-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.carousel-slot-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  background: linear-gradient(135deg, rgba(15, 108, 189, 0.08), rgba(14, 165, 233, 0.06));
+}
+
+.carousel-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+}
+
+.carousel-value {
+  margin-top: 4px;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.carousel-feed-row {
+  display: grid;
+  gap: 8px;
+}
+
+.carousel-wheel {
+  position: relative;
+  width: min(100%, 320px);
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: radial-gradient(circle at center, #f8fbff 0%, #dbe8f5 52%, #bccddd 100%);
+  box-shadow: inset 0 2px 8px rgba(27, 37, 51, 0.14);
+}
+
+.carousel-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 42%;
+  min-width: 120px;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 4px;
+  border: 1px solid rgba(27, 37, 51, 0.22);
+  background: linear-gradient(180deg, #f7fbff, #e6eef8);
+}
+
+.carousel-center button {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.carousel-selected-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+}
+
+.carousel-selected-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.carousel-slot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(180deg, #3f4e66, #2a3548);
+  border: 2px solid rgba(255, 255, 255, 0.44);
+  font-size: 12px;
+  padding: 0;
+}
+
+.carousel-slot:hover {
+  filter: brightness(1.08);
+}
+
+.carousel-slot-active {
+  background: linear-gradient(180deg, #f97316, #c2410c);
+  border-color: #ffedd5;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.22);
+}
+
+.carousel-slot[data-slot="1"] { transform: translate(-50%, -50%) translateY(-132px); }
+.carousel-slot[data-slot="2"] { transform: translate(-50%, -50%) rotate(36deg) translateY(-132px) rotate(-36deg); }
+.carousel-slot[data-slot="3"] { transform: translate(-50%, -50%) rotate(72deg) translateY(-132px) rotate(-72deg); }
+.carousel-slot[data-slot="4"] { transform: translate(-50%, -50%) rotate(108deg) translateY(-132px) rotate(-108deg); }
+.carousel-slot[data-slot="5"] { transform: translate(-50%, -50%) rotate(144deg) translateY(-132px) rotate(-144deg); }
+.carousel-slot[data-slot="6"] { transform: translate(-50%, -50%) rotate(180deg) translateY(-132px) rotate(-180deg); }
+.carousel-slot[data-slot="7"] { transform: translate(-50%, -50%) rotate(216deg) translateY(-132px) rotate(-216deg); }
+.carousel-slot[data-slot="8"] { transform: translate(-50%, -50%) rotate(252deg) translateY(-132px) rotate(-252deg); }
+.carousel-slot[data-slot="9"] { transform: translate(-50%, -50%) rotate(288deg) translateY(-132px) rotate(-288deg); }
+.carousel-slot[data-slot="10"] { transform: translate(-50%, -50%) rotate(324deg) translateY(-132px) rotate(-324deg); }
+
+.carousel-input-group {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.carousel-input-group input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--ink);
+}
+
+#carousel_status {
   font-size: 12px;
   max-height: 150px;
   overflow-y: auto;

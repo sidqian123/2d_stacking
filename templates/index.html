@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/app.css?v=20260414-3">
+  <link rel="stylesheet" href="/static/app.css?v=20260421-2">
 </head>
 <body>
   <div class="bg-grid" aria-hidden="true"></div>
@@ -244,6 +244,46 @@
         </div>
       </article>
 
+      <article class="widget panel" draggable="true" data-widget="carousel-controls">
+        <header class="panel-header widget-handle compact">
+          <h2>Carousel Feeder</h2>
+          <span class="grab">Drag</span>
+        </header>
+        <div class="widget-body">
+          <div class="carousel-header">
+            <div class="carousel-slot-card">
+              <div class="carousel-label">Last Fed Slot</div>
+              <div class="carousel-value" id="carousel_last_slot">-</div>
+            </div>
+            <div class="carousel-slot-card">
+              <div class="carousel-label">Total Feeds</div>
+              <div class="carousel-value" id="carousel_feed_count">0</div>
+            </div>
+          </div>
+
+          <div class="carousel-wheel" role="group" aria-label="Carousel slots">
+            <button class="carousel-slot" type="button" data-slot="1" onclick="selectCarouselSlot(1)">1</button>
+            <button class="carousel-slot" type="button" data-slot="2" onclick="selectCarouselSlot(2)">2</button>
+            <button class="carousel-slot" type="button" data-slot="3" onclick="selectCarouselSlot(3)">3</button>
+            <button class="carousel-slot" type="button" data-slot="4" onclick="selectCarouselSlot(4)">4</button>
+            <button class="carousel-slot" type="button" data-slot="5" onclick="selectCarouselSlot(5)">5</button>
+            <button class="carousel-slot" type="button" data-slot="6" onclick="selectCarouselSlot(6)">6</button>
+            <button class="carousel-slot" type="button" data-slot="7" onclick="selectCarouselSlot(7)">7</button>
+            <button class="carousel-slot" type="button" data-slot="8" onclick="selectCarouselSlot(8)">8</button>
+            <button class="carousel-slot" type="button" data-slot="9" onclick="selectCarouselSlot(9)">9</button>
+            <button class="carousel-slot" type="button" data-slot="10" onclick="selectCarouselSlot(10)">10</button>
+
+            <div class="carousel-center">
+              <div class="carousel-selected-label">Selected</div>
+              <div class="carousel-selected-value" id="carousel_selected_slot">1</div>
+              <button type="button" onclick="feedCarouselSelected()">Feed Chip</button>
+            </div>
+          </div>
+
+          <p class="stage-position-hint">Click a slot to select it, then feed directly to the stage.</p>
+        </div>
+      </article>
+
       <article class="widget panel" draggable="true" data-widget="command-logs">
         <header class="panel-header widget-handle compact">
           <h2>Status + Command Logs</h2>
@@ -327,6 +367,21 @@
           </div>
 
           <div class="status-head">
+            <h3>Carousel Status</h3>
+            <div class="status-actions">
+              <button
+                class="secondary status-toggle"
+                data-status-key="carousel_status"
+                data-target-id="carousel_status"
+                type="button"
+              >Collapse</button>
+            </div>
+          </div>
+          <div class="status-box" data-status-key="carousel_status">
+            <pre id="carousel_status">Loading...</pre>
+          </div>
+
+          <div class="status-head">
             <h3>Recent Commands</h3>
             <div class="status-actions">
               <button class="secondary" type="button" onclick="clearCommandLog()">Clear</button>
@@ -346,6 +401,6 @@
     </section>
   </main>
 
-  <script src="/static/app.js?v=20260414-6"></script>
+  <script src="/static/app.js?v=20260421-1"></script>
 </body>
 </html>

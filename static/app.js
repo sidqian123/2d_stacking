@@ -22,6 +22,7 @@ const pollInFlight = {
   thermal: false,
   vacuum: false,
   rotation: false,
+  carousel: false,
 };
 
 async function runDedupedPoll(key, fn) {
@@ -48,6 +49,7 @@ function startDashboardPolling() {
     { key: "thermal", fn: loadThermalStatus, intervalMs: 2000 },
     { key: "vacuum", fn: loadVacuumStatus, intervalMs: 2000 },
     { key: "rotation", fn: loadRotationStatus, intervalMs: 2000 },
+    { key: "carousel", fn: loadCarouselStatus, intervalMs: 2000 },
   ];
 
   tasks.forEach((task) => {
@@ -173,16 +175,23 @@ function initDashboardDrag() {
   const widgets = Array.from(dashboard.querySelectorAll(".widget"));
 
   widgets.forEach((widget) => {
+    let dragArmed = false;
+
     // Prevent browser-native drag interactions from controls/media inside widgets.
     Array.from(widget.querySelectorAll("button, input, select, textarea, label, canvas, img")).forEach((el) => {
       el.setAttribute("draggable", "false");
     });
 
+    widget.addEventListener("pointerdown", (event) => {
+      dragArmed = event.target instanceof Element && Boolean(event.target.closest(".widget-handle"));
+    });
+
     widget.addEventListener("dragstart", (e) => {
-      if (!e.target || !e.target.closest(".widget-handle")) {
+      if (!dragArmed) {
         e.preventDefault();
         return;
       }
+      dragArmed = false;
       draggingWidget = widget;
       widget.classList.add("dragging");
       e.dataTransfer.effectAllowed = "move";
@@ -190,6 +199,7 @@ function initDashboardDrag() {
     });
 
     widget.addEventListener("dragend", () => {
+      dragArmed = false;
       widget.classList.remove("dragging");
       Array.from(dashboard.querySelectorAll(".drop-target")).forEach((w) => 
         w.classList.remove("drop-target")
@@ -948,6 +958,8 @@ async function toggleThermalPower() {
 // Vacuum Pump Control Functions
 let vacuumPowerState = false;
 let rotationCurrentAngle = 0;
+let carouselBusy = false;
+let selectedCarouselSlot = 1;
 
 async function loadVacuumStatus() {
   try {
@@ -1098,6 +1110,87 @@ async function setRotationAngle(value) {
   await loadRotationStatus();
 }
 
+// Carousel Control Functions
+function setCarouselSlotVisualSelection() {
+  const buttons = Array.from(document.querySelectorAll(".carousel-slot"));
+  buttons.forEach((button) => {
+    const slot = Number.parseInt(button.getAttribute("data-slot") || "", 10);
+    button.classList.toggle("carousel-slot-active", slot === selectedCarouselSlot);
+  });
+}
+
+function selectCarouselSlot(slotNumber) {
+  const slot = Number.parseInt(String(slotNumber), 10);
+  if (!Number.isFinite(slot) || slot < 1 || slot > 10) {
+    appendCommandLog("ERR carouselSelect -> slot_number must be 1..10");
+    return;
+  }
+
+  selectedCarouselSlot = slot;
+  const selectedEl = document.getElementById("carousel_selected_slot");
+  if (selectedEl) {
+    selectedEl.textContent = String(slot);
+  }
+  setCarouselSlotVisualSelection();
+}
+
+async function loadCarouselStatus() {
+  try {
+    const response = await fetch("/api/carousel/status");
+    const data = await response.json();
+
+    carouselBusy = Boolean(data.is_busy);
+
+    const lastSlotEl = document.getElementById("carousel_last_slot");
+    if (lastSlotEl) {
+      lastSlotEl.textContent = data.last_fed_slot === null || data.last_fed_slot === undefined
+        ? "-"
+        : String(data.last_fed_slot);
+    }
+
+    const feedCountEl = document.getElementById("carousel_feed_count");
+    if (feedCountEl) {
+      feedCountEl.textContent = String(Number(data.feed_count) || 0);
+    }
+
+    const statusEl = document.getElementById("carousel_status");
+    if (statusEl) {
+      statusEl.textContent = JSON.stringify(data, null, 2);
+    }
+  } catch (error) {
+    console.error("Error loading carousel status:", error);
+  }
+}
+
+async function feedCarouselSlot(slotNumber) {
+  if (carouselBusy) {
+    appendCommandLog("INFO carousel feed ignored: device is busy");
+    return;
+  }
+
+  let slot = slotNumber;
+  if (slot === undefined) {
+    slot = selectedCarouselSlot;
+  }
+
+  if (!Number.isFinite(slot) || slot < 1 || slot > 10) {
+    appendCommandLog("ERR carouselFeed -> slot_number must be an integer from 1 to 10");
+    return;
+  }
+
+  await loggedFetch("/api/carousel/feed", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ slot_number: slot }),
+  }, `carouselFeed slot=${slot}`);
+  selectCarouselSlot(slot);
+  await loadCarouselStatus();
+}
+
+async function feedCarouselSelected() {
+  await feedCarouselSlot(selectedCarouselSlot);
+}
+
 initDashboardDrag();
 restoreLayoutState();
 initWidgetResize();
@@ -1105,4 +1198,5 @@ restoreWidgetSizes();
 initStatusToggles();
 initThermalGraph();
 updateStageStepButtons();
+selectCarouselSlot(1);
 startDashboardPolling();

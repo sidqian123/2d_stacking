@@ -16,6 +16,7 @@ if load_dotenv is not None:
     load_dotenv(BASE_DIR / ".env")
 
 from app.camera_service import CameraService
+from carousel.router import router as carousel_router
 from nanopositioner.router import router as nanopositioner_router
 from rotation_plate.router import router as rotation_router
 from thermal_plate.router import router as thermal_router
@@ -27,6 +28,7 @@ app.include_router(nanopositioner_router)
 app.include_router(rotation_router)
 app.include_router(thermal_router)
 app.include_router(vacuum_router)
+app.include_router(carousel_router)
 
 camera_service = CameraService()
 
